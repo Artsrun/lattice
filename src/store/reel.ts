@@ -2,6 +2,8 @@ import { create } from "zustand";
 import {
   CHAPTERS,
   DURATION,
+  PAGES,
+  SHADE,
   chapterAt,
   chapterById,
   chapterHoldTime,
@@ -19,6 +21,7 @@ type ReelState = {
   looped: boolean;
   webgl: boolean;
   reduceMotion: boolean;
+  shaderFocus: boolean;
   setPlaying: (v: boolean) => void;
   toggle: () => void;
   setSpeed: (v: number) => void;
@@ -41,16 +44,24 @@ export const useReel = create<ReelState>((set, get) => ({
   looped: false,
   webgl: true,
   reduceMotion: false,
+  shaderFocus: false,
   setPlaying: (v) => set({ playing: v }),
-  toggle: () => set({ playing: !get().playing }),
+  toggle: () => {
+    const playing = !get().playing;
+    if (playing && get().shaderFocus) {
+      set({ playing: true, shaderFocus: false, chapter: chapterAt(get().time) });
+      return;
+    }
+    set({ playing });
+  },
   setSpeed: (v) => set({ speed: clampSpeed(v) }),
   nudgeSpeed: (dir) => set({ speed: clampSpeed(get().speed + dir * 0.25) }),
   setTime: (t) => {
     const time = wrapTime(t);
-    set({ time, chapter: chapterAt(time) });
+    set({ time, chapter: chapterAt(time), shaderFocus: false });
   },
   advance: (dt) => {
-    const { playing, speed, time, idle, reduceMotion } = get();
+    const { playing, speed, time, idle, reduceMotion, shaderFocus } = get();
     const nextIdle = reduceMotion ? idle : idle + dt;
     if (!playing) {
       set({ idle: nextIdle });
@@ -64,21 +75,26 @@ export const useReel = create<ReelState>((set, get) => ({
     }
     set({
       time: next,
-      chapter: chapterAt(next),
+      chapter: shaderFocus ? SHADE : chapterAt(next),
       looped,
       idle: nextIdle,
+      shaderFocus: playing ? false : shaderFocus,
     });
   },
   jumpChapter: (id) => {
+    if (id === SHADE.id) {
+      set({ chapter: SHADE, playing: false, shaderFocus: true });
+      return;
+    }
     const ch = chapterById(id);
     if (!ch) return;
-    set({ time: chapterHoldTime(ch), chapter: ch, playing: false });
+    set({ time: chapterHoldTime(ch), chapter: ch, playing: false, shaderFocus: false });
   },
   skipChapter: (dir) => {
-    const i = CHAPTERS.findIndex((c) => c.id === get().chapter.id);
-    const next = CHAPTERS[Math.min(CHAPTERS.length - 1, Math.max(0, i + dir))];
+    const i = PAGES.findIndex((c) => c.id === get().chapter.id);
+    const next = PAGES[Math.min(PAGES.length - 1, Math.max(0, i + dir))];
     if (!next) return;
-    set({ time: chapterHoldTime(next), chapter: next, playing: false });
+    get().jumpChapter(next.id);
   },
   restart: () =>
     set({
@@ -86,6 +102,7 @@ export const useReel = create<ReelState>((set, get) => ({
       chapter: CHAPTERS[0]!,
       playing: false,
       looped: false,
+      shaderFocus: false,
     }),
   setWebgl: (v) => set({ webgl: v }),
   setReduceMotion: (v) => set({ reduceMotion: v, playing: v ? false : get().playing }),
