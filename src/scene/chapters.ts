@@ -98,6 +98,19 @@ export const CHAPTERS: Chapter[] = [
   },
 ];
 
+export const SHADE: Chapter = {
+  id: "shade",
+  label: "Shade",
+  kicker: "The field",
+  start: 0,
+  end: 0,
+  href: "#shade",
+  linkLabel: "The Book of Shaders",
+  linkHref: "https://thebookofshaders.com",
+};
+
+export const PAGES: Chapter[] = [CHAPTERS[0]!, SHADE, ...CHAPTERS.slice(1)];
+
 type KF = {
   t: number;
   p: [number, number, number];
@@ -175,6 +188,7 @@ export function chapterAt(time: number): Chapter {
 }
 
 export function chapterById(id: string) {
+  if (id === SHADE.id) return SHADE;
   return CHAPTERS.find((c) => c.id === id) ?? null;
 }
 

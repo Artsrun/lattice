@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import {
   CHAPTERS,
   DURATION,
+  PAGES,
   SPEED_MAX,
   SPEED_MIN,
   SPEED_STEP,
@@ -12,6 +13,15 @@ import {
   loopFade,
 } from "@/scene/chapters";
 import { useReel } from "@/store/reel";
+
+function playToggle() {
+  const wasShade = useReel.getState().shaderFocus;
+  useReel.getState().toggle();
+  if (wasShade) {
+    const ch = useReel.getState().chapter;
+    window.history.replaceState(null, "", ch.href);
+  }
+}
 
 function goPage(id: string) {
   const hash = `#${id}`;
@@ -27,7 +37,6 @@ export function Hud() {
   const playing = useReel((s) => s.playing);
   const speed = useReel((s) => s.speed);
   const chapter = useReel((s) => s.chapter);
-  const toggle = useReel((s) => s.toggle);
   const setSpeed = useReel((s) => s.setSpeed);
   const nudgeSpeed = useReel((s) => s.nudgeSpeed);
   const skipChapter = useReel((s) => s.skipChapter);
@@ -46,7 +55,7 @@ export function Hud() {
     const applyHash = () => {
       const id = window.location.hash.replace(/^#/, "");
       if (!id) return;
-      const ch = CHAPTERS.find((c) => c.id === id);
+      const ch = PAGES.find((c) => c.id === id);
       if (ch) useReel.getState().jumpChapter(ch.id);
     };
     applyHash();
@@ -84,7 +93,7 @@ export function Hud() {
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (e.code === "Space") {
         e.preventDefault();
-        toggle();
+        playToggle();
       } else if (e.code === "Digit1") {
         setSpeed(1);
       } else if (e.code === "Digit2") {
@@ -98,21 +107,21 @@ export function Hud() {
         window.history.replaceState(null, "", "#lattice");
       } else if (e.code === "ArrowRight") {
         e.preventDefault();
-        const i = CHAPTERS.findIndex((c) => c.id === useReel.getState().chapter.id);
-        const next = CHAPTERS[Math.min(CHAPTERS.length - 1, i + 1)];
+        const i = PAGES.findIndex((c) => c.id === useReel.getState().chapter.id);
+        const next = PAGES[Math.min(PAGES.length - 1, i + 1)];
         if (next) goPage(next.id);
       } else if (e.code === "ArrowLeft") {
         e.preventDefault();
-        const i = CHAPTERS.findIndex((c) => c.id === useReel.getState().chapter.id);
-        const prev = CHAPTERS[Math.max(0, i - 1)];
+        const i = PAGES.findIndex((c) => c.id === useReel.getState().chapter.id);
+        const prev = PAGES[Math.max(0, i - 1)];
         if (prev) goPage(prev.id);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [toggle, setSpeed, nudgeSpeed, restart]);
+  }, [setSpeed, nudgeSpeed, restart]);
 
-  const chapterIndex = CHAPTERS.findIndex((c) => c.id === chapter.id);
+  const chapterIndex = PAGES.findIndex((c) => c.id === chapter.id);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4 sm:p-6">
@@ -151,7 +160,7 @@ export function Hud() {
 
       <div className="pointer-events-auto w-full max-w-3xl self-center sm:max-w-none sm:self-stretch">
         <nav aria-label="Sections" className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {CHAPTERS.map((ch) => {
+          {PAGES.map((ch) => {
             const on = ch.id === chapter.id;
             return (
               <a
@@ -180,7 +189,7 @@ export function Hud() {
             type="button"
             onClick={() => {
               skipChapter(-1);
-              const prev = CHAPTERS[Math.max(0, chapterIndex - 1)];
+              const prev = PAGES[Math.max(0, chapterIndex - 1)];
               if (prev) window.history.replaceState(null, "", prev.href);
             }}
             aria-label="Skip to previous section"
@@ -190,7 +199,7 @@ export function Hud() {
           </button>
           <button
             type="button"
-            onClick={toggle}
+            onClick={playToggle}
             aria-label={playing ? "Pause" : "Play"}
             className="grid size-11 shrink-0 place-items-center rounded-lg bg-fg text-bg transition-transform duration-150 ease-out active:scale-[0.96]"
           >
@@ -204,7 +213,7 @@ export function Hud() {
             type="button"
             onClick={() => {
               skipChapter(1);
-              const next = CHAPTERS[Math.min(CHAPTERS.length - 1, chapterIndex + 1)];
+              const next = PAGES[Math.min(PAGES.length - 1, chapterIndex + 1)];
               if (next) window.history.replaceState(null, "", next.href);
             }}
             aria-label="Skip to next section"

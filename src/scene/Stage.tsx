@@ -6,6 +6,7 @@ import { CameraRig } from "@/scene/CameraRig";
 import { createMaterials } from "@/scene/materials";
 import { C } from "@/scene/theme";
 import { createTextures } from "@/scene/textures";
+import { ShadeField } from "@/scene/ShadeField";
 import { World } from "@/scene/World";
 import { useReel } from "@/store/reel";
 
@@ -72,6 +73,7 @@ export function Stage() {
         <MatsCtx.Provider value={mats}>
           <TexCtx.Provider value={tex}>
             <CameraRig />
+            <ShadeField />
             <World />
           </TexCtx.Provider>
         </MatsCtx.Provider>
