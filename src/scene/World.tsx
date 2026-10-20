@@ -10,6 +10,7 @@ import { useReel } from "@/store/reel";
 const DUMMY = new THREE.Object3D();
 
 export function World() {
+  const shaderFocus = useReel((s) => s.shaderFocus);
   return (
     <>
       <color attach="background" args={[C.bg]} />
@@ -25,12 +26,16 @@ export function World() {
       <pointLight position={[0, 2.2, -50]} intensity={1.5} distance={12} color={C.gold} />
       <pointLight position={[0, 2.1, -62]} intensity={1.1} distance={10} color={C.gold} />
       <pointLight position={[0, 2.4, -74]} intensity={1.35} distance={11} color={C.orange} />
-      <LineGrid />
-      <CubeField />
-      <CoreBoard />
-      <Spectacle />
-      <Handset />
-      <Hall />
+      {!shaderFocus && (
+        <>
+          <LineGrid />
+          <CubeField />
+          <CoreBoard />
+          <Spectacle />
+          <Handset />
+          <Hall />
+        </>
+      )}
     </>
   );
 }
